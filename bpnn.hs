@@ -7,11 +7,13 @@ import Data.List
 import Control.Monad.State
 import Control.Monad.Writer
 import Control.Arrow
+import Debug.Trace
 
 data NeuralNetwork = NeuralNetwork Nodes Nodes Nodes deriving (Show)
 
-
-data Node = Node Activation Weights Momentums deriving (Show) -- TODO make record syntax for automatic getter
+data Node = Node Activation Weights Momentums -- TODO make record syntax for automatic getter
+instance Show Node where
+  show (Node a w m) = "Node {\n\tActivation : " ++ show a ++ "\n\tWeights : " ++ show w ++ "\n\tMomemtums : " ++ show m ++ "\n}\n"
 type Nodes = [Node]
 type Activation = Double
 type Weight = Double
@@ -51,7 +53,7 @@ main = do
                      ,([1,1],[0])]
   let (nn', e) = execState (trainFor xor_patterns 0.5 0.1 1000) (nn, 0)
   let results = test nn' xor_patterns
-  sequence (map print results)
+  mapM print results
 
 ----------------------------------
 -- * Test
@@ -91,7 +93,7 @@ trainPattern p learn_rate delta_p = do
   (nn, e) <- get
   let (nn_u, _ ) = execState (update $ fst p) (nn, e)
   let (nn' , e') = execState (backPropagate (snd p) learn_rate delta_p) (nn_u, e)
-  put (nn' , e')
+  trace (show nn') $ put (nn' , e')
   return ()
 
 update :: PatternInput -> State NeuralNetworkState ()
@@ -114,7 +116,7 @@ applyInput inputs inputNodes =
           inputNodes' = fmap(\(Node a w m, a') -> (Node a' w m)) $ zip inputNodes inputs
 
 generateNextActivations :: Nodes -> [Activation]
-generateNextActivations nodes = fmap generateNextActivation nodes
+generateNextActivations = fmap generateNextActivation 
 
 generateNextActivation :: Node -> Activation
 generateNextActivation (Node a w _) = sigmoid $ sum $ fmap (*a) w
@@ -126,7 +128,7 @@ backPropagate outputs learn_rate delta_p = do
   let output_errors = zipWith (-) (map getActivation outputNodes) outputs
   let output_deltas = (map dsigmoid >>> zipWith(*)) (map getActivation outputNodes) output_errors
   let hidden_errors = fmap (\(Node _ w _) -> sum $ zipWith (*) output_deltas w) hiddenNodes -- TODO
-  let hidden_deltas = fmap (\(Node a _ _, e) -> dsigmoid a * e) $ zip hiddenNodes hidden_errors -- TODO
+  let hidden_deltas = (map dsigmoid >>> zipWith(*)) (map getActivation hiddenNodes) hidden_errors
   let hiddenNodes'  = backPropagateResults output_deltas hiddenNodes learn_rate delta_p
   let inputNodes'   = backPropagateResults hidden_deltas inputNodes learn_rate delta_p
   let nn' = NeuralNetwork inputNodes' hiddenNodes' outputNodes
