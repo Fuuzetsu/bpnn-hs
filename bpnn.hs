@@ -40,10 +40,12 @@ getWeights (Node _ w _) = w
 
 getMomemtums :: Node -> Momentums
 getMomemtums (Node _ _ m) = m
+
 -----------------------------------
 -- * Main
 ----------------------------------
 
+main :: IO ()
 main = do
   gen <- newStdGen
   let nn = initNetwork 2 2 1 gen
