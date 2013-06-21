@@ -27,7 +27,7 @@ type Pattern = (PatternInput,PatternOutput)
 type Patterns = [Pattern]
 
 type RandomState a = State StdGen a
-type NeuralNetworkState = (NeuralNetwork, Double) 
+type NeuralNetworkState = (NeuralNetwork, Double)
 
 -----------------------------------
 -- * Field getters
@@ -55,7 +55,7 @@ main = do
                      ,([1,1],[0])]
   let (nn', e) = execState (trainFor xor_patterns 0.5 0.1 1000) (nn, 0)
   let results = test nn' xor_patterns
-  mapM print results
+  mapM_ print results
 
 ----------------------------------
 -- * Test
@@ -112,13 +112,13 @@ update inputs = do
   return ()
 
 applyInput :: PatternInput -> Nodes -> Nodes
-applyInput inputs inputNodes = 
+applyInput inputs inputNodes =
   inputNodes' ++ [biasNode]
     where biasNode = last inputNodes
           inputNodes' = fmap(\(Node a w m, a') -> (Node a' w m)) $ zip inputNodes inputs
 
 generateNextActivations :: Nodes -> [Activation]
-generateNextActivations = fmap generateNextActivation 
+generateNextActivations = fmap generateNextActivation
 
 generateNextActivation :: Node -> Activation
 generateNextActivation (Node a w _) = sigmoid $ sum $ fmap (*a) w
@@ -139,7 +139,7 @@ backPropagate outputs learn_rate delta_p = do
   return ()
 
 backPropagateResults :: [Double] -> Nodes -> Double -> Double -> Nodes
-backPropagateResults deltas nodes learn_rate delta_p = 
+backPropagateResults deltas nodes learn_rate delta_p =
   fmap (\x -> backPropagateResult deltas x learn_rate delta_p) nodes
 
 backPropagateResult :: [Double] -> Node -> Double -> Double -> Node
@@ -152,7 +152,7 @@ backPropagateResult deltas node learn_rate delta_p =
           m' = changes
 
 ----------------------------------
--- * Init 
+-- * Init
 ----------------------------------
 initNetwork :: Int -> Int -> Int -> StdGen -> NeuralNetwork
 initNetwork i' h o gen = do
@@ -167,9 +167,9 @@ initNodeLayer ni no bnds = mapM (\x -> initNode no bnds) [1..ni]
 
 initNode :: Int -> (Double, Double) -> RandomState Node
 initNode n bnds = do
-  let a = 1.0 
+  let a = 1.0
   w <- randList bnds n
-  let m = replicate n 0.0 
+  let m = replicate n 0.0
   return (Node a w m)
 
 ----------------------------------
@@ -179,7 +179,7 @@ initNode n bnds = do
 getBoundedRandom :: Random a => (a,a) -> RandomState a
 getBoundedRandom bnds = do
   gen <- get
-  let (val, gen') = randomR bnds gen 
+  let (val, gen') = randomR bnds gen
   put gen'
   return val
 
