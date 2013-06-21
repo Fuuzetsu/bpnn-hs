@@ -192,7 +192,7 @@ runBoundedRandom bnds = do
 
 -- Why can't this be mapM(const runBoundedRandom bnds) ?
 randList :: Random a => (a,a) -> Int -> RandomState [a]
-randList bnds n = mapM (\x -> runBoundedRandom bnds) [1..n]
+randList bnds n = mapM (const $ runBoundedRandom bnds) [1..n]
 
 iterateS :: State s a -> s -> [s]
 iterateS f s0 =
